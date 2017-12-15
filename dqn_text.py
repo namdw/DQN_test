@@ -53,6 +53,7 @@ def replay_train(mainDQN, targetDQN, train_batch):
 		if done:
 			Q[0, action] = reward
 		else:
+			# Q[0, action] = reward + dis * np.max(mainDQN.predict(next_state))
 			Q[0, action] = reward + dis * np.max(targetDQN.predict(next_state))
 
 		y_stack = np.vstack([y_stack, Q])
@@ -75,12 +76,16 @@ def bot_play(mainDQN):
 	s = env.reset()
 	reward_sum = 0
 
+	stop_count = 10000
+	step_counter = 0
+	
 	while True:
+		step_counter += 1
 		env.render()
 		a = np.argmax(mainDQN.predict(s))
 		s, reward, done, _ = env.step(a)
-		reward_sum += reward_sum
-		if done:
+		reward_sum += reward
+		if done or step_counter > stop_count:
 			print("Total score: {}".format(reward_sum))
 			break
 
