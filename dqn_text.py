@@ -1,4 +1,5 @@
-# all code referenced from https://hunkim.github.io/ml/RL/rl07-l2.pdf
+# Test code for DQN
+# all code revised and referenced from https://hunkim.github.io/ml/RL/rl07-l2.pdf
 
 import numpy as np
 import tensorflow as tf
@@ -7,7 +8,7 @@ import random
 from collections import deque
 
 import gym
-env = gym.make('CartPole-v0')
+env = gym.make('MountainCar-v0')
 
 input_size = env.observation_space.shape[0]
 output_size = env.action_space.n
@@ -23,12 +24,12 @@ class DQN:
 
 		self._build_network()
 
-	def _build_network(self, h_size=10, l_rate=1e-1):
+	def _build_network(self, h_size=64, l_rate=1e-1):
 		with tf.variable_scope(self.net_name):
 			self._X = tf.placeholder(tf.float32, [None, self.input_size], name="input_x")
 
 			W1 = tf.get_variable("W1", shape=[self.input_size, h_size], initializer=tf.contrib.layers.xavier_initializer())
-			layer1 = tf.nn.tanh(tf.matmul(self._X, W1))
+			layer1 = tf.nn.relu(tf.matmul(self._X, W1))
 			W2 = tf.get_variable("W2", shape=[h_size, self.output_size], initializer=tf.contrib.layers.xavier_initializer())
 			self._Qpred = tf.matmul(layer1, W2)
 
@@ -53,10 +54,10 @@ def replay_train(mainDQN, targetDQN, train_batch):
 		if done:
 			Q[0, action] = reward
 		else:
-			# Q[0, action] = reward + dis * np.max(mainDQN.predict(next_state))
+			# Q[0, action] = reward + dis * np.max(mainDQN.predict(next_state)) # SARSA?
 			Q[0, action] = reward + dis * np.max(targetDQN.predict(next_state))
 
-		y_stack = np.vstack([y_stack, Q])
+		y_stack = np.vstack([y_stack, Q])	
 		x_stack = np.vstack([x_stack, state])
 
 	return mainDQN.update(x_stack, y_stack)
@@ -76,7 +77,7 @@ def bot_play(mainDQN):
 	s = env.reset()
 	reward_sum = 0
 
-	stop_count = 10000
+	stop_count = 1000
 	step_counter = 0
 	
 	while True:
@@ -116,7 +117,7 @@ def main():
 
 				next_state, reward, done, _ = env.step(action)
 				if done:
-					reward = -100
+					reward = 100
 
 				replay_buffer.append((state, action, reward, next_state, done))
 				if len(replay_buffer) > REPLAY_MEMORY:
