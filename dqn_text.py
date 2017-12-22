@@ -77,7 +77,7 @@ def bot_play(mainDQN):
 	s = env.reset()
 	reward_sum = 0
 
-	stop_count = 1000
+	stop_count = 5000
 	step_counter = 0
 	
 	while True:
@@ -91,7 +91,7 @@ def bot_play(mainDQN):
 			break
 
 def main():
-	max_episodes = 5000
+	max_episodes = 2000
 	replay_buffer = deque()
 
 	with tf.Session() as sess:
@@ -117,7 +117,7 @@ def main():
 
 				next_state, reward, done, _ = env.step(action)
 				if done:
-					reward = 100
+					reward = 5000
 
 				replay_buffer.append((state, action, reward, next_state, done))
 				if len(replay_buffer) > REPLAY_MEMORY:
@@ -140,7 +140,7 @@ def main():
 				print("Loss: ", loss)
 				sess.run(copy_ops)
 
-			bot_play(mainDQN)
+		bot_play(mainDQN)
 
 if __name__ == "__main__":
 	main()
