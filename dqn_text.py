@@ -14,6 +14,7 @@ input_size = env.observation_space.shape[0]
 output_size = env.action_space.n
 dis = 0.9
 REPLAY_MEMORY = 50000
+file_cnt = 1
 
 class DQN:
 	def __init__(self, session, input_size, output_size, name="main"):
@@ -73,7 +74,8 @@ def get_copy_var_ops(*, dest_scope_name="target", src_scope_name="main"):
 
 	return op_holder
 
-def bot_play(mainDQN):
+def bot_play(mainDQN, ep_num):
+	global file_cnt
 	s = env.reset()
 	reward_sum = 0
 
@@ -93,11 +95,11 @@ def bot_play(mainDQN):
 		reward_sum += reward
 		if done or step_counter > stop_count:
 			print("Total score: {}".format(reward_sum))
-			if(reward_sum > 300):
-				# print(traj)
+			if(reward_sum >= 200):
 				# save trajectory 
-				with open('abc.txt', 'w') as file:
-					np.save(traj, file)
+				# with open(str(ep_num)+'.npy', 'w') as file:
+				np.save("E"+str(file_cnt), traj)
+				file_cnt+=1
 			break
 
 def main():
@@ -142,9 +144,9 @@ def main():
 			if step_count > 10000:
 				pass
 
-			if episode % 100 == 1:
-				for _ in range(3):
-					bot_play(mainDQN)
+			if episode % 10 == 1:
+				for _ in range(5):
+					bot_play(mainDQN, episode)
 			if episode % 10 == 1:
 				for _ in range(300):
 					minibatch = random.sample(replay_buffer, 10)
@@ -154,7 +156,7 @@ def main():
 				sess.run(copy_ops)
 
 		for _ in range(5):
-			bot_play(mainDQN)
+			bot_play(mainDQN, episode)
 
 if __name__ == "__main__":
 	main()
