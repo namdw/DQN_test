@@ -8,7 +8,7 @@ import random
 from collections import deque
 
 import gym
-env = gym.make('MountainCar-v0')
+env = gym.make('CartPole-v0')
 
 input_size = env.observation_space.shape[0]
 output_size = env.action_space.n
@@ -80,14 +80,24 @@ def bot_play(mainDQN):
 	stop_count = 300
 	step_counter = 0
 	
+	traj = np.empty(0).reshape(0, input_size+env.action_space.n)
+	
 	while True:
 		step_counter += 1
 		env.render()
 		a = np.argmax(mainDQN.predict(s))
+		action = np.array([0,0])
+		action[a] = 1
+		traj = np.vstack([traj, np.concatenate((s,action))])
 		s, reward, done, _ = env.step(a)
 		reward_sum += reward
 		if done or step_counter > stop_count:
 			print("Total score: {}".format(reward_sum))
+			if(reward_sum > 300):
+				# print(traj)
+				# save trajectory 
+				with open('abc.txt', 'w') as file:
+					np.save(traj, file)
 			break
 
 def main():
@@ -104,7 +114,7 @@ def main():
 		sess.run(copy_ops)
 
 		for episode in range(max_episodes):
-			e = 1./ ((episode / 100) + 1)
+			e = 1./ ((episode) + 1)
 			done = False
 			step_count = 0
 			state = env.reset()
@@ -117,7 +127,7 @@ def main():
 
 				next_state, reward, done, _ = env.step(action)
 				if done:
-					reward = 500
+					reward = -100
 
 				replay_buffer.append((state, action, reward, next_state, done))
 				if len(replay_buffer) > REPLAY_MEMORY:
@@ -136,7 +146,7 @@ def main():
 				for _ in range(3):
 					bot_play(mainDQN)
 			if episode % 10 == 1:
-				for _ in range(100):
+				for _ in range(300):
 					minibatch = random.sample(replay_buffer, 10)
 					loss, _ = replay_train(mainDQN, targetDQN, minibatch)
 
